@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analisis Hasil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; padding: 10px; }
+        .page-header { background: white; padding: 15px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 20px; border-radius: 15px; }
+        .result-card { border: none; border-radius: 20px; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        .img-container { position: relative; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        .img-label { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; backdrop-filter: blur(4px); font-weight: 500; z-index: 2; }
+        .metric-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .metric-value { font-weight: 700; font-size: 0.95rem; word-wrap: break-word; }
+        .metric-label { font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+        
+        /* Warna Khusus */
+        .text-plus { color: #10b981; } 
+        .bg-plus { background-color: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+        .text-minus { color: #ef4444; }
+        .bg-minus { background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+        
+        /* HEADER SECTION STYLE */
+        .section-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .section-title { 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            color: #4f46e5; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            background: #eef2ff; 
+            padding: 6px 18px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* --- LOGIKA PEMBATAS PRESISI --- */
+        .stats-col {
+            position: relative;
+        }
+
+        /* Tampilan Laptop/Tablet (Vertical Divider) */
+        @media (min-width: 768px) {
+            .stats-col:first-child::after {
+                content: "";
+                position: absolute;
+                right: 0;           /* Tempel di sisi paling kanan kolom kiri */
+                top: 10%;           /* Jarak dari atas */
+                height: 80%;        /* Tinggi garis 80% container */
+                width: 1px;         /* Ketebalan garis */
+                background-color: #e2e8f0;
+                transform: translateX(50%); /* Geser 50% ke kanan agar pas di tengah gutter */
+            }
+        }
+
+        /* Tampilan HP (Horizontal Divider) */
+        @media (max-width: 767px) {
+            .stats-col:first-child {
+                border-bottom: 2px dashed #e2e8f0;
+                padding-bottom: 25px;
+                margin-bottom: 25px;
+            }
+        }
+
+        /* Responsive Mobile Tweaks */
+        @media (max-width: 576px) {
+            .metric-box { padding: 8px 4px; }
+            .metric-value { font-size: 0.8rem; }
+            .metric-label { font-size: 0.6rem; }
+            .btn-download-icon { padding: 8px 0; }
+            h5.fw-bold { font-size: 1.1rem; }
+            .badge { font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mb-4">
+    <div class="page-header px-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark" style="font-size: 1rem;">
+            <i class="bi bi-bar-chart-fill text-primary me-2"></i>Laporan
+        </h5>
+        <a href="/clear" class="btn btn-outline-danger btn-sm rounded-pill px-3" style="font-size: 0.75rem;">
+            <i class="bi bi-arrow-repeat me-1"></i> Reset
+        </a>
+    </div>
+</div>
+
+<div class="container pb-5">
+    {% for r in results %}
+    <div class="result-card p-3 p-md-4 mb-4">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom gap-2">
+            <div>
+                <h6 class="fw-bold mb-0 text-truncate" style="max-width: 250px;">Hasil Analisis</h6>
+                <small class="text-muted" style="font-size: 0.75rem;">Asli: <span class="fw-bold text-dark">{{ r.orig_size }}</span></small>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-light text-dark border">
+                    <i class="bi bi-clock me-1"></i> Encode: {{ r.encode_time }}s
+                </span>
+                <span class="badge bg-light text-dark border">
+                    <i class="bi bi-play-circle me-1"></i> Decode: {{ r.decode_time }}s
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="img-container">
+                    <span class="img-label">Original</span>
+                    <img src="/{{ r.orig }}" class="img-fluid w-100" style="object-fit: cover; aspect-ratio: 1/1;">
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="img-container">
+                    <span class="img-label bg-primary text-white border border-light">RGB</span>
+                    <img src="/{{ r.recon_rgb }}" class="img-fluid w-100" style="object-fit: cover; aspect-ratio: 1/1;">
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="img-container">
+                    <span class="img-label bg-secondary text-white border border-light">Grayscale</span>
+                    <img src="/{{ r.recon_gray }}" class="img-fluid w-100" style="object-fit: cover; aspect-ratio: 1/1; filter: grayscale(100%);">
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 stats-col"> 
+                <div class="section-header">
+                    <span class="section-title">Statistik RGB</span>
+                </div>
+                <div class="row g-2 align-items-stretch">
+                    <div class="col-4">
+                        <div class="metric-box">
+                            <div class="metric-value text-primary">{{ r.size_rgb }}</div>
+                            <div class="metric-label">Size</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        {% if r.ratio_rgb < 0 %}
+                            <div class="metric-box bg-minus">
+                                <div class="metric-value text-minus">{{ r.ratio_rgb }}%</div>
+                                <div class="metric-label text-minus">Bengkak</div>
+                            </div>
+                        {% else %}
+                            <div class="metric-box bg-plus">
+                                <div class="metric-value text-plus">{{ r.ratio_rgb }}%</div>
+                                <div class="metric-label text-plus">Hemat</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-4">
+                        <a href="/{{ r.recon_rgb }}" download class="btn btn-primary w-100 h-100 d-flex align-items-center justify-content-center btn-download-icon" style="border-radius: 12px;">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 stats-col">
+                <div class="section-header">
+                    <span class="section-title text-secondary" style="background: #f1f5f9; color: #475569;">Statistik Gray</span>
+                </div>
+                <div class="row g-2 align-items-stretch">
+                    <div class="col-4">
+                        <div class="metric-box">
+                            <div class="metric-value text-secondary">{{ r.size_gray }}</div>
+                            <div class="metric-label">Size</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        {% if r.ratio_gray < 0 %}
+                            <div class="metric-box bg-minus">
+                                <div class="metric-value text-minus">{{ r.ratio_gray }}%</div>
+                                <div class="metric-label text-minus">Bengkak</div>
+                            </div>
+                        {% else %}
+                            <div class="metric-box bg-plus">
+                                <div class="metric-value text-plus">{{ r.ratio_gray }}%</div>
+                                <div class="metric-label text-plus">Hemat</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-4">
+                        <a href="/{{ r.recon_gray }}" download class="btn btn-secondary w-100 h-100 d-flex align-items-center justify-content-center btn-download-icon" style="border-radius: 12px;">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-12 mt-3">
+                <div class="alert alert-light border d-flex justify-content-between align-items-center mb-0 px-3 py-2">
+                    <div class="text-center w-50 border-end">
+                        <small class="text-muted d-block" style="font-size: 0.65rem;">KUALITAS (PSNR)</small>
+                        <span class="fw-bold text-dark">{{ r.psnr }} dB</span>
+                    </div>
+                    <div class="text-center w-50">
+                        <small class="text-muted d-block" style="font-size: 0.65rem;">KEMIRIPAN (SSIM)</small>
+                        <span class="fw-bold text-dark">{{ r.ssim }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

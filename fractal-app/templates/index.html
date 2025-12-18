@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fractal Compressor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #818cf8;
+            --bg-color: #f8fafc;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px; /* Padding body agar tidak mepet di HP */
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            width: 100%;
+        }
+
+        .header-section {
+            background: var(--primary-color);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: #eef2ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        .btn-compress {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 14px 28px;
+            font-weight: 600;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .btn-compress:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        /* Loading Spinner Style (Yang Lama) */
+        .loading-overlay {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+        }
+        .spinner-custom {
+            width: 3.5rem;
+            height: 3.5rem;
+            border: 5px solid #e0e7ff;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- RESPONSIVE TWEAKS (MOBILE) --- */
+        @media (max-width: 576px) {
+            .header-section {
+                padding: 20px 15px;
+            }
+            .header-section h2 {
+                font-size: 1.5rem;
+            }
+            .p-md-5 {
+                padding: 1.5rem !important;
+            }
+            .upload-area {
+                padding: 30px 15px;
+            }
+            .upload-icon {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+            
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-warning alert-dismissible fade show mb-3 shadow-sm" role="alert">
+                    <small><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ message }}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <div class="main-card">
+                <div class="header-section">
+                    <h2 class="fw-bold mb-1"><i class="bi bi-cpu-fill me-2"></i>Fractal Lab</h2>
+                    <p class="mb-0 opacity-75 small">RGB & Grayscale Compression</p>
+                </div>
+
+                <div class="p-4 p-md-5">
+                    <form id="compressForm" action="/compress" method="POST" enctype="multipart/form-data">
+                        
+                        <label class="upload-area w-100 mb-4" id="dropZone">
+                            <input id="fileInput" type="file" name="images" class="d-none" multiple accept=".jpg,.jpeg,.png,.bmp">
+                            <i class="bi bi-cloud-arrow-up-fill upload-icon d-block"></i>
+                            <h5 class="fw-bold text-dark fs-6">Drop file atau Klik Disini</h5>
+                            <p class="text-muted small mb-0" style="font-size: 0.8rem;">JPG, PNG, BMP (Max 2 File)</p>
+                            <p id="fileNameDisplay" class="mt-2 text-primary fw-bold fst-italic small text-truncate"></p>
+                        </label>
+
+                        <div id="fileWarning" class="alert alert-danger py-2 small border-0 shadow-sm" style="display:none;">
+                            Maksimal 2 file saja!
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <select class="form-select border-0 bg-light shadow-sm" id="modeSelect" name="mode">
+                                <option value="fast">🚀 Fast Mode (Cepat)</option>
+                                <option value="accurate">🎯 Accurate Mode (Detail)</option>
+                            </select>
+                            <label for="modeSelect">Mode Kompresi</label>
+                        </div>
+
+                        <button id="submitBtn" class="btn btn-primary btn-compress text-white" type="submit">
+                            Mulai Kompresi
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <p class="text-center text-muted mt-4 small" style="font-size: 0.75rem;">&copy; 2025 05TPLP006 Kelompok 1 PCD</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered px-3">
+        <div class="modal-content loading-overlay border-0 shadow-lg py-5 px-4 text-center">
+            <div class="spinner-custom mx-auto mb-3"></div>
+            <h5 class="fw-bold text-dark mb-1">Sedang Mengompresi...</h5>
+            <p class="text-muted small mb-0">Algoritma fraktal sedang bekerja mencari pola.</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const fileInput = document.getElementById("fileInput");
+    const fileNameDisplay = document.getElementById("fileNameDisplay");
+    const dropZone = document.getElementById("dropZone");
+    const warning = document.getElementById("fileWarning");
+    const submitBtn = document.getElementById("submitBtn");
+    const form = document.getElementById("compressForm");
+
+    // Efek saat file dipilih
+    fileInput.addEventListener("change", function() {
+        if (this.files.length > 0) {
+            let names = Array.from(this.files).map(f => f.name).join(", ");
+            fileNameDisplay.innerText = names;
+            dropZone.style.borderColor = "#4f46e5";
+            dropZone.style.backgroundColor = "#eef2ff";
+        }
+        
+        if (fileInput.files.length > 2) {
+            warning.style.display = "block";
+            submitBtn.disabled = true;
+        } else {
+            warning.style.display = "none";
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Drag & Drop
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', (e) => {
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+    });
+
+    // Tampilkan Loading Simple saat Submit
+    form.addEventListener("submit", function(e) {
+        if (fileInput.files.length === 0) {
+            e.preventDefault();
+            alert("Pilih gambar terlebih dahulu!");
+            return;
+        }
+        // Hanya tampilkan modal, tanpa logika progress bar
+        const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        modal.show();
+    });
+</script>
+</body>
+</html>
