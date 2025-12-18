@@ -4,8 +4,9 @@ import uuid
 import cv2
 import numpy as np
 
-UPLOAD_FOLDER = "static/uploaded"
-RECON_FOLDER = "static/recon"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploaded")
+RECON_FOLDER = os.path.join(BASE_DIR, "static", "recon")
 
 def ensure_directories():
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
